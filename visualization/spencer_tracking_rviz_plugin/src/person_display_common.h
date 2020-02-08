@@ -175,37 +175,37 @@ namespace spencer_tracking_rviz_plugin
         }
 
         /// Create a visual representation of the person itself, if not set yet
-        void createPersonVisualIfRequired(Ogre::SceneNode* sceneNode, shared_ptr<PersonVisual> &personVisual)
-        {
-            if (!personVisual) {
-                PersonVisualDefaultArgs defaultArgs(getContext()->getSceneManager(), sceneNode);
-                PersonVisual* newPersonVisual = 0;
+      void createPersonVisualIfRequired(Ogre::SceneNode* sceneNode, boost::shared_ptr<PersonVisual> &personVisual)
+      {
+	if (!personVisual) {
+	  PersonVisualDefaultArgs defaultArgs(getContext()->getSceneManager(), sceneNode);
+	  PersonVisual* newPersonVisual = 0;
 
-                if (m_commonProperties->style->getOptionInt() == STYLE_CYLINDER) newPersonVisual = new CylinderPersonVisual(defaultArgs);
-                if (m_commonProperties->style->getOptionInt() == STYLE_PERSON_MESHES) newPersonVisual = new MeshPersonVisual(defaultArgs);
-                if (m_commonProperties->style->getOptionInt() == STYLE_BOUNDING_BOXES) newPersonVisual = new BoundingBoxPersonVisual(defaultArgs);
-                if (m_commonProperties->style->getOptionInt() == STYLE_CROSSHAIRS) newPersonVisual = new CrosshairPersonVisual(defaultArgs);
-                personVisual.reset(newPersonVisual);
-            }
+	  if (m_commonProperties->style->getOptionInt() == STYLE_CYLINDER) newPersonVisual = new CylinderPersonVisual(defaultArgs);
+	  if (m_commonProperties->style->getOptionInt() == STYLE_PERSON_MESHES) newPersonVisual = new MeshPersonVisual(defaultArgs);
+	  if (m_commonProperties->style->getOptionInt() == STYLE_BOUNDING_BOXES) newPersonVisual = new BoundingBoxPersonVisual(defaultArgs);
+	  if (m_commonProperties->style->getOptionInt() == STYLE_CROSSHAIRS) newPersonVisual = new CrosshairPersonVisual(defaultArgs);
+	  personVisual.reset(newPersonVisual);
+	}
 
-            // Update position of the person visual
-            if (personVisual) {
-                personVisual->setPosition(Ogre::Vector3(0,0, personVisual->getHeight() * 0.5));
-            }
-        }
+	// Update position of the person visual
+	if (personVisual) {
+	  personVisual->setPosition(Ogre::Vector3(0,0, personVisual->getHeight() * 0.5));
+	}
+      }
 
-        /// Applies common styles which apply to person visuals, such as line width etc.
-        void applyCommonStyles(shared_ptr<PersonVisual> &personVisual) {
-            if(!personVisual) return;
+      /// Applies common styles which apply to person visuals, such as line width etc.
+      void applyCommonStyles(boost::shared_ptr<PersonVisual> &personVisual) {
+	if(!personVisual) return;
 
-            // Set line width of wireframe visualization
-            HasLineWidth* hasLineWidth = dynamic_cast<HasLineWidth*>(personVisual.get());
-            if(hasLineWidth) {
-                hasLineWidth->setLineWidth(m_commonProperties->line_width->getFloat());
-            }
+	// Set line width of wireframe visualization
+	HasLineWidth* hasLineWidth = dynamic_cast<HasLineWidth*>(personVisual.get());
+	if(hasLineWidth) {
+	  hasLineWidth->setLineWidth(m_commonProperties->line_width->getFloat());
+	}
 
-            // Set scaling factor
-            personVisual->setScalingFactor(m_commonProperties->scaling_factor->getFloat());
+	// Set scaling factor
+	personVisual->setScalingFactor(m_commonProperties->scaling_factor->getFloat());
         }
 
         // Builds velocity vector for a person from a twist message

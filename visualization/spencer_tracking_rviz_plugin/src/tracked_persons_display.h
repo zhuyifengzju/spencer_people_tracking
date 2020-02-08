@@ -46,38 +46,38 @@ namespace spencer_tracking_rviz_plugin
     struct TrackedPersonHistoryEntry
     {
         Ogre::Vector3 position;
-        shared_ptr<rviz::Shape> shape;
-        bool wasOccluded;
+      boost::shared_ptr<rviz::Shape> shape;
+      bool wasOccluded;
         track_id trackId;
     };
 
     /// History of a tracked person.
-    typedef circular_buffer<shared_ptr<TrackedPersonHistoryEntry> > TrackedPersonHistory;
+  typedef circular_buffer<boost::shared_ptr<TrackedPersonHistoryEntry> > TrackedPersonHistory;
 
-    /// The visual of a tracked person.
-    struct TrackedPersonVisual
-    {
-        TrackedPersonHistory history;
-        shared_ptr<rviz::BillboardLine> historyLine;
-        Ogre::Vector3 positionOfLastHistoryEntry;
+  /// The visual of a tracked person.
+  struct TrackedPersonVisual
+  {
+    TrackedPersonHistory history;
+    boost::shared_ptr<rviz::BillboardLine> historyLine;
+    Ogre::Vector3 positionOfLastHistoryEntry;
 
-        shared_ptr<Ogre::SceneNode> sceneNode, historySceneNode, historyLineSceneNode;
+    boost::shared_ptr<Ogre::SceneNode> sceneNode, historySceneNode, historyLineSceneNode;
 
-        shared_ptr<PersonVisual> personVisual;
-        shared_ptr<TextNode> idText, detectionIdText, stateText;
-        shared_ptr<rviz::Arrow> velocityArrow;
-        shared_ptr<CovarianceVisual> covarianceVisual;
+    boost::shared_ptr<PersonVisual> personVisual;
+    boost::shared_ptr<TextNode> idText, detectionIdText, stateText;
+    boost::shared_ptr<rviz::Arrow> velocityArrow;
+    boost::shared_ptr<CovarianceVisual> covarianceVisual;
 
-        Ogre::Matrix4 lastObservedPose;
+    Ogre::Matrix4 lastObservedPose;
 
-        bool isOccluded, isDeleted, isMissed, hasZeroVelocity;
-        int numCyclesNotSeen;
-    };
+    bool isOccluded, isDeleted, isMissed, hasZeroVelocity;
+    int numCyclesNotSeen;
+  };
 
-    // The TrackedPersonsDisplay class itself just implements a circular buffer,
-    // editable parameters, and Display subclass machinery.
-    class TrackedPersonsDisplay: public PersonDisplayCommon<spencer_tracking_msgs::TrackedPersons>
-    {
+  // The TrackedPersonsDisplay class itself just implements a circular buffer,
+  // editable parameters, and Display subclass machinery.
+  class TrackedPersonsDisplay: public PersonDisplayCommon<spencer_tracking_msgs::TrackedPersons>
+  {
     Q_OBJECT
     public:
         // Constructor.  pluginlib::ClassLoader creates instances by calling
@@ -117,12 +117,12 @@ namespace spencer_tracking_rviz_plugin
         void processMessage(const spencer_tracking_msgs::TrackedPersons::ConstPtr& msg);
        
         // All currently active tracks, with unique track ID as map key
-        typedef map<track_id, shared_ptr<TrackedPersonVisual> > track_map;
-        track_map m_cachedTracks;
+    typedef map<track_id, boost::shared_ptr<TrackedPersonVisual> > track_map;
+    track_map m_cachedTracks;
 
         // Scene node for track history visualization
-        shared_ptr<Ogre::SceneNode> m_trackHistorySceneNode;
-        std::string m_realFixedFrame;
+    boost::shared_ptr<Ogre::SceneNode> m_trackHistorySceneNode;
+    std::string m_realFixedFrame;
 
         // User-editable property variables.
         rviz::FloatProperty* m_occlusion_alpha_property;

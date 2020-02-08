@@ -78,7 +78,7 @@ void DetectedPersonsDisplay::reset()
 // Set the rendering style (cylinders, meshes, ...) of detected persons
 void DetectedPersonsDisplay::personVisualTypeChanged()
 {
-    foreach(shared_ptr<DetectedPersonVisual>& detectedPersonVisual, m_previousDetections)
+  foreach(boost::shared_ptr<DetectedPersonVisual>& detectedPersonVisual, m_previousDetections)
     {
         detectedPersonVisual->personVisual.reset();
         createPersonVisualIfRequired(detectedPersonVisual->sceneNode.get(), detectedPersonVisual->personVisual);
@@ -89,7 +89,7 @@ void DetectedPersonsDisplay::personVisualTypeChanged()
 // Update dynamically adjustable properties of all existing detections
 void DetectedPersonsDisplay::stylesChanged()
 {
-    foreach(shared_ptr<DetectedPersonVisual> detectedPersonVisual, m_previousDetections)
+  foreach(boost::shared_ptr<DetectedPersonVisual> detectedPersonVisual, m_previousDetections)
     {
         bool personHidden = isPersonHidden(detectedPersonVisual->detectionId);
 
@@ -161,102 +161,102 @@ void DetectedPersonsDisplay::processMessage(const spencer_tracking_msgs::Detecte
     //
     for (vector<spencer_tracking_msgs::DetectedPerson>::const_iterator detectedPersonIt = msg->detections.begin(); detectedPersonIt != msg->detections.end(); ++detectedPersonIt)
     {
-        shared_ptr<DetectedPersonVisual> detectedPersonVisual;
+      boost::shared_ptr<DetectedPersonVisual> detectedPersonVisual;
 
-        // Create a new visual representation of the detected person
-        detectedPersonVisual = shared_ptr<DetectedPersonVisual>(new DetectedPersonVisual);
-        m_previousDetections.push_back(detectedPersonVisual);
+      // Create a new visual representation of the detected person
+      detectedPersonVisual = boost::shared_ptr<DetectedPersonVisual>(new DetectedPersonVisual);
+      m_previousDetections.push_back(detectedPersonVisual);
 
-        // This scene node is the parent of all visualization elements for the detected person
-        detectedPersonVisual->sceneNode = shared_ptr<Ogre::SceneNode>(scene_node_->createChildSceneNode());
-        detectedPersonVisual->detectionId = detectedPersonIt->detection_id;
-        detectedPersonVisual->confidence = detectedPersonIt->confidence;
-        Ogre::SceneNode* currentSceneNode = detectedPersonVisual->sceneNode.get();
-
-
-        //
-        // Person visualization
-        //
-
-        // Create new visual for the person itself, if needed
-        shared_ptr<PersonVisual> &personVisual = detectedPersonVisual->personVisual;
-        createPersonVisualIfRequired(currentSceneNode, personVisual);
-
-        const double personHeight = personVisual ? personVisual->getHeight() : 0;
-        const double halfPersonHeight = personHeight / 2.0;
+      // This scene node is the parent of all visualization elements for the detected person
+      detectedPersonVisual->sceneNode = boost::shared_ptr<Ogre::SceneNode>(scene_node_->createChildSceneNode());
+      detectedPersonVisual->detectionId = detectedPersonIt->detection_id;
+      detectedPersonVisual->confidence = detectedPersonIt->confidence;
+      Ogre::SceneNode* currentSceneNode = detectedPersonVisual->sceneNode.get();
 
 
-        //
-        // Position & visibility of entire detection
-        //
+      //
+      // Person visualization
+      //
 
-        const Ogre::Matrix3 covXYZinTargetFrame = covarianceXYZIntoTargetFrame(detectedPersonIt->pose);
-        setPoseOrientation(currentSceneNode, detectedPersonIt->pose, covXYZinTargetFrame, personHeight);
+      // Create new visual for the person itself, if needed
+      boost::shared_ptr<PersonVisual> &personVisual = detectedPersonVisual->personVisual;
+      createPersonVisualIfRequired(currentSceneNode, personVisual);
 
-        //
-        // Texts
-        //
-        {
-            // Detection ID
-            if (!detectedPersonVisual->detectionIdText) {
-                detectedPersonVisual->detectionIdText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
-                detectedPersonVisual->detectionIdText->showOnTop();
-            }
-
-            ss.str(""); ss << "det " << detectedPersonIt->detection_id;
-            detectedPersonVisual->detectionIdText->setCaption(ss.str());
-
-            // Confidence value
-            if (!detectedPersonVisual->confidenceText) {
-                detectedPersonVisual->confidenceText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
-            }
-
-            ss.str(""); ss << fixed << setprecision(2) << detectedPersonIt->confidence;
-            detectedPersonVisual->confidenceText->setCaption(ss.str());
-            detectedPersonVisual->confidenceText->showOnTop();
-
-            // Modality text
-            if (!detectedPersonVisual->modalityText) {
-                detectedPersonVisual->modalityText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
-            }
-
-            ss.str(""); ss << detectedPersonIt->modality;
-            detectedPersonVisual->modalityText->setCaption(ss.str());
-            detectedPersonVisual->modalityText->showOnTop();
-        }
-
-        //
-        // Covariance visualization
-        //
-        if(!detectedPersonVisual->covarianceVisual) {
-            detectedPersonVisual->covarianceVisual.reset(new ProbabilityEllipseCovarianceVisual(context_->getSceneManager(), currentSceneNode));
-        }
-
-        // Update covariance ellipse
-        {
-            Ogre::Vector3 covarianceMean(0,0,0); // zero mean because parent node is already centered at pose mean
-            detectedPersonVisual->covarianceVisual->setOrientation(currentSceneNode->getOrientation().Inverse());
-            detectedPersonVisual->covarianceVisual->setMeanCovariance(covarianceMean, covXYZinTargetFrame);
-        }
+      const double personHeight = personVisual ? personVisual->getHeight() : 0;
+      const double halfPersonHeight = personHeight / 2.0;
 
 
-        //
-        // Orientation arrows
-        //
-        if (!detectedPersonVisual->orientationArrow) {
-            detectedPersonVisual->orientationArrow.reset(new rviz::Arrow(context_->getSceneManager(), currentSceneNode));
-        }
+      //
+      // Position & visibility of entire detection
+      //
 
-        // Update orientation arrow
-        {
-            const Ogre::Vector3 forwardVector(1,0,0);
+      const Ogre::Matrix3 covXYZinTargetFrame = covarianceXYZIntoTargetFrame(detectedPersonIt->pose);
+      setPoseOrientation(currentSceneNode, detectedPersonIt->pose, covXYZinTargetFrame, personHeight);
 
-            const double personRadius = 0.2;
-            const Ogre::Vector3 arrowAttachPoint(personRadius, 0, halfPersonHeight); // relative to tracked person's scene node
-            detectedPersonVisual->orientationArrow->setPosition(arrowAttachPoint);
-            detectedPersonVisual->orientationArrow->setOrientation(Ogre::Vector3::NEGATIVE_UNIT_Z.getRotationTo(forwardVector));
-            detectedPersonVisual->hasValidOrientation = hasValidOrientation(detectedPersonIt->pose);
-        }
+      //
+      // Texts
+      //
+      {
+	// Detection ID
+	if (!detectedPersonVisual->detectionIdText) {
+	  detectedPersonVisual->detectionIdText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
+	  detectedPersonVisual->detectionIdText->showOnTop();
+	}
+
+	ss.str(""); ss << "det " << detectedPersonIt->detection_id;
+	detectedPersonVisual->detectionIdText->setCaption(ss.str());
+
+	// Confidence value
+	if (!detectedPersonVisual->confidenceText) {
+	  detectedPersonVisual->confidenceText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
+	}
+
+	ss.str(""); ss << fixed << setprecision(2) << detectedPersonIt->confidence;
+	detectedPersonVisual->confidenceText->setCaption(ss.str());
+	detectedPersonVisual->confidenceText->showOnTop();
+
+	// Modality text
+	if (!detectedPersonVisual->modalityText) {
+	  detectedPersonVisual->modalityText.reset(new TextNode(context_->getSceneManager(), currentSceneNode));
+	}
+
+	ss.str(""); ss << detectedPersonIt->modality;
+	detectedPersonVisual->modalityText->setCaption(ss.str());
+	detectedPersonVisual->modalityText->showOnTop();
+      }
+
+      //
+      // Covariance visualization
+      //
+      if(!detectedPersonVisual->covarianceVisual) {
+	detectedPersonVisual->covarianceVisual.reset(new ProbabilityEllipseCovarianceVisual(context_->getSceneManager(), currentSceneNode));
+      }
+
+      // Update covariance ellipse
+      {
+	Ogre::Vector3 covarianceMean(0,0,0); // zero mean because parent node is already centered at pose mean
+	detectedPersonVisual->covarianceVisual->setOrientation(currentSceneNode->getOrientation().Inverse());
+	detectedPersonVisual->covarianceVisual->setMeanCovariance(covarianceMean, covXYZinTargetFrame);
+      }
+
+
+      //
+      // Orientation arrows
+      //
+      if (!detectedPersonVisual->orientationArrow) {
+	detectedPersonVisual->orientationArrow.reset(new rviz::Arrow(context_->getSceneManager(), currentSceneNode));
+      }
+
+      // Update orientation arrow
+      {
+	const Ogre::Vector3 forwardVector(1,0,0);
+
+	const double personRadius = 0.2;
+	const Ogre::Vector3 arrowAttachPoint(personRadius, 0, halfPersonHeight); // relative to tracked person's scene node
+	detectedPersonVisual->orientationArrow->setPosition(arrowAttachPoint);
+	detectedPersonVisual->orientationArrow->setOrientation(Ogre::Vector3::NEGATIVE_UNIT_Z.getRotationTo(forwardVector));
+	detectedPersonVisual->hasValidOrientation = hasValidOrientation(detectedPersonIt->pose);
+      }
 
     } // end for loop over all detected persons
 

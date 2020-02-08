@@ -56,24 +56,24 @@ namespace spencer_tracking_rviz_plugin
     /// the owning rviz::Display can look up track positions etc for visualization.
     class TrackedPersonsCache {
     public:
-        typedef std::map<track_id, shared_ptr<CachedTrackedPerson> > CachedTrackedPersonsMap;
+      typedef std::map<track_id, boost::shared_ptr<CachedTrackedPerson> > CachedTrackedPersonsMap;
 
-        // Destructor
-        ~TrackedPersonsCache();
+      // Destructor
+      ~TrackedPersonsCache();
 
-        /// Create TrackedPersons subscriber and setup RViz properties.
-        void initialize(rviz::Display* display, rviz::DisplayContext* context, ros::NodeHandle update_nh);
+      /// Create TrackedPersons subscriber and setup RViz properties.
+      void initialize(rviz::Display* display, rviz::DisplayContext* context, ros::NodeHandle update_nh);
 
-        /// Clear internal state, including all cached track positions.
-        void reset();
+      /// Clear internal state, including all cached track positions.
+      void reset();
 
-        /// Lookup information for the given tracked person ID. Returns a null pointer if no information is available.
-        const shared_ptr<CachedTrackedPerson> lookup(track_id trackId);
+      /// Lookup information for the given tracked person ID. Returns a null pointer if no information is available.
+      const boost::shared_ptr<CachedTrackedPerson> lookup(track_id trackId);
 
-        /// Return internal map
-        const CachedTrackedPersonsMap& getMap() {
-            return m_cachedTrackedPersons;
-        }
+      /// Return internal map
+      const CachedTrackedPersonsMap& getMap() {
+	return m_cachedTrackedPersons;
+      }
 
     private:
         // Callback when a new TrackedPersons message has arrived
