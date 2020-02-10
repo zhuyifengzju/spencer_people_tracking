@@ -1,0 +1,42 @@
+<launch>
+    <arg name="use_upper_body_detector" default="true"/> <!-- use depth-template-based upper-body detector? -->
+    <arg name="use_pcl_detector" default="false"/> <!-- use ROI-HOG detector from PCL library? cannot be used with upper-body detector at the same time! -->
+    <arg name="use_hog_detector" default="false"/> <!-- use RGB groundHOG detector? Requires cudaHOG library-->
+
+    <arg name="front_laser" default="true"/>
+    <arg name="front_rgbd" default="true"/>
+
+    <arg name="rear_rgbd" default="false"/>
+    <arg name="rear_laser" default="false"/>
+
+    <!-- Remap topics from cobot to spencer people tracking -->
+    <remap from="/spencer/sensors/laser_front/echo0" to="/Cobot/Laser" />
+    
+    <!-- RGB-D detectors -->
+    <include file="$(find spencer_people_tracking_launch)/launch/detectors/front_rgbd_detectors.launch" if="$(arg front_rgbd)">
+        <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
+        <arg name="pcl_detector" value="$(arg use_pcl_detector)"/>
+        <arg name="hog" value="$(arg use_hog_detector)"/>
+    </include>
+
+    <include file="$(find spencer_people_tracking_launch)/launch/detectors/rear_rgbd_detectors.launch" if="$(arg rear_rgbd)">
+        <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
+        <arg name="pcl_detector" value="$(arg use_pcl_detector)"/>
+        <arg name="hog" value="$(arg use_hog_detector)"/>
+    </include>
+
+    <!-- Laser detectors -->
+    <include file="$(find spencer_people_tracking_launch)/launch/detectors/laser_detectors.launch" if="$(arg front_laser)"> 
+      <!-- <arg name="rear" value="$(arg rear_laser)"/> -->
+    </include>
+
+    <!-- People tracking -->
+    <include file="$(find spencer_people_tracking_launch)/launch/tracking/freiburg_people_tracking.launch">
+        <arg name="rgbd" default="true"/>
+        <arg name="laser_low_confidence_detections" default="true"/>
+    </include>
+
+    <!-- Group tracking -->
+    <include file="$(find spencer_people_tracking_launch)/launch/tracking/group_tracking.launch"/> 
+
+</launch>

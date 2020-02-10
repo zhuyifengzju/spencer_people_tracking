@@ -79,7 +79,7 @@ if folder:
     filePrefixes += checkModality("stereo", False)
     filePrefixes += checkModality("kinect2", False)
     filePrefixes += checkModality("dslr", False)
-
+    filePrefixes += checkModality("cobot", True)
     rospy.loginfo("Enabled bagfile prefixes: " + str(filePrefixes))
 
 
