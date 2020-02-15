@@ -1,8 +1,8 @@
 <launch>
-    <arg name="bagfile_folder" default="$(env HOME)/demo/example"/> <!-- download using script in scripts/ folder -->
+    <arg name="bagfile_folder" default="$(env HOME)/workspace/astra_bagfile"/> <!-- download using script in scripts/ folder -->
 
     <arg name="front_laser" default="true"/>
-    <arg name="front_rgbd" default="false"/>
+    <arg name="front_rgbd" default="true"/>
     
     <arg name="rear_rgbd" default="false"/>
     <arg name="rear_laser" default="false"/>
@@ -13,7 +13,7 @@
     <arg name="use_upper_body_detector" default="true" unless="$(arg use_pcl_detector)"/>
     <arg name="use_upper_body_detector" default="false"    if="$(arg use_pcl_detector)"/>
 
-    <!-- <arg name="static_map" default="true"/> -->
+    <arg name="static_map" default="true"/>
     
     <arg name="loop" default="true"/>
     <arg name="rate" default="0.2"/>
@@ -22,7 +22,32 @@
     <arg name="rviz_config_file" default="$(find spencer_people_tracking_launch)/rviz/tracking-rgbd-laser.rviz"/>
 
     <!-- Remap topics from cobot to spencer people tracking -->
-    <remap from="/spencer/sensors/laser_front/echo0" to="/Cobot/Laser" />
+    <remap from="/spencer/sensors/laser_front/echo0" to="/Cobot/Laser"
+	   />
+    <remap from="/spencer/sensors/odom" to="/Cobot/Odometry"/>
+    <!-- <remap from="/spencer/sensors/rgbd_front_top/depth/camera_info" -->
+    <!-- 	   to="/camera/depth/camera_info"/> -->
+    <!-- <remap from="/spencer/sensors/rgbd_front_top/rgb/camera_info" -->
+    <!-- 	   to="/camera/rgb/camera_info"/> -->
+
+    <!-- <remap -->
+    <!-- 	from="/spencer/sensors/rgbd_front_top/depth/image_raw/compressedDepth" -->
+    <!-- 	to="/camera/depth/image_raw/compressedDepth"/> -->
+    <!-- <remap -->
+    <!-- 	from="/spencer/sensors/rgbd_front_top/rgb/image_raw/compressed" -->
+    <!-- 	to="/camera/rgb/image_raw/compressed"/> -->
+    <remap from="/camera/depth/camera_info"
+    	   to="/spencer/sensors/rgbd_front_top/depth/camera_info"/>
+    <remap from="/camera/rgb/camera_info"
+    	to="/spencer/sensors/rgbd_front_top/rgb/camera_info"/>
+
+    <remap
+    	from="/camera/depth/image_raw/compressedDepth"
+    	to="/spencer/sensors/rgbd_front_top/depth_recorded/image_raw/compressedDepth"
+    	/>
+    <remap
+    	from="/camera/rgb/image_raw/compressed"
+    	to="/spencer/sensors/rgbd_front_top/rgb_recorded/image_color/compressed"/>
 
     <!-- Bagfile playback -->
     <include file="$(find spencer_bagfile_tools)/launch/playback_from_cobot.launch">
@@ -32,9 +57,9 @@
             <arg name="front_rgbd" value="$(arg front_rgbd)"/>
             <arg name="rear_rgbd" value="$(arg rear_rgbd)"/>
             <arg name="remap_tf" value="true"/>
-	    <arg name="cobot" value="true"/>
+
         <!-- We could also supply individual filenames instead. In that case, it is easiest if all topics were recorded into the same bagfile. -->
-        <!-- <arg name="files" value="$(find bagfile_folder)/"/> -->
+        <!-- <arg name="files" value="$(find bagfile_folder)/mybagfile.bag"/> -->
 
         <arg name="loop" value="$(arg loop)"/>
         <arg name="rate" value="$(arg rate)"/>
@@ -45,21 +70,21 @@
     </include>
 
     <!-- Optionally load a map to suppress false positives -->
-    <!-- <node name="map_server" pkg="map_server" type="map_server" args="$(arg bagfile_folder)/map.yaml" if="$(arg static_map)"/> -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg bagfile_folder)/map.yaml" if="$(arg static_map)"/>
 
 
     <!-- Detectors -->
-    <!-- <include file="$(find spencer_people_tracking_launch)/launch/detectors/front_rgbd_detectors.launch" if="$(arg front_rgbd)"> -->
-    <!--     <arg name="upper_body" value="$(arg use_upper_body_detector)"/> -->
-    <!--     <arg name="pcl_detector" value="$(arg use_pcl_detector)"/> -->
-    <!--     <arg name="hog" value="$(arg use_hog_detector)"/> -->
-    <!-- </include> -->
+    <include file="$(find spencer_people_tracking_launch)/launch/detectors/front_rgbd_detectors.launch" if="$(arg front_rgbd)">
+        <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
+        <arg name="pcl_detector" value="$(arg use_pcl_detector)"/>
+        <arg name="hog" value="$(arg use_hog_detector)"/>
+    </include>
 
-    <!-- <include file="$(find spencer_people_tracking_launch)/launch/detectors/rear_rgbd_detectors.launch" if="$(arg rear_rgbd)"> -->
-    <!--     <arg name="upper_body" value="$(arg use_upper_body_detector)"/> -->
-    <!--     <arg name="pcl_detector" value="$(arg use_pcl_detector)"/> -->
-    <!--     <arg name="hog" value="$(arg use_hog_detector)"/> -->
-    <!-- </include> -->
+    <include file="$(find spencer_people_tracking_launch)/launch/detectors/rear_rgbd_detectors.launch" if="$(arg rear_rgbd)">
+        <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
+        <arg name="pcl_detector" value="$(arg use_pcl_detector)"/>
+        <arg name="hog" value="$(arg use_hog_detector)"/>
+    </include>
 
     <include file="$(find spencer_people_tracking_launch)/launch/detectors/laser_detectors.launch" if="$(arg front_laser)">
         <arg name="rear" value="$(arg rear_laser)"/>
@@ -81,9 +106,60 @@
         <rosparam param="/spencer/perception_internal/people_tracking/srl_nearest_neighbor_tracker/max_occlusions_before_deletion_of_mature_track">200</rosparam>
     </group>
 
-    <node pkg="tf2_ros" type="static_transform_publisher"
-	  name="cobot_broadcaster" args="0 0 0 0 0 0 1 map laser" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="camera_rgb" args="0 0 0 0 0 0 1 camera_rgb_frame rgbd_front_top_rgb_frame" /> -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="camera_rgb_optical" args="0 0 0 0 0 0 1 -->
+    <!-- 					  camera_rgb_optical_frame rgbd_front_top_rgb_optical_frame" /> -->
+
+
     <!-- Group tracking -->
     <include file="$(find spencer_people_tracking_launch)/launch/tracking/group_tracking.launch"/> 
 
+    <arg name="node_start_delay" default="1.0" />
+    <node name="listener" pkg="roscpp_tutorials" type="listener"
+    	  launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" />
+    
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="cobot_broadcaster_odom" args="0 0 0 0 0 0 1 map odom"
+    	  />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="odom2base_link" args="0 0 0 0 0 0 1 odom
+				      base_footprint"/>
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="cobot_broadcaster" args="0 0 0.5 0 0 0 1 base_link
+    					 laser" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="front_top_link_broadcaster" args="0 0 1.0 0 0 0 1 base_link rgbd_front_top_link" />
+    
+
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="baseline2camera_rgb" args="0 0 1.0 0 0 0 1 base_link
+    					   camera_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="camera_link_rgb" args="0 0 0.0 0 0 0 1 camera_link
+    					   camera_rgb_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="camera_link_depth" args="0 0 0.0 0 0 0 1 camera_link
+    					   camera_depth_frame" />
+    
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="baseline2camera_depth" args="0 0 1.0 0 0 0 1 base_link -->
+    <!-- 	  				     camera_depth_frame" /> -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="baseline2camera_rgb" args="0 0 1.0 0 0 0 1 base_link -->
+    <!-- 	  				     camera_rgb_frame" /> -->
+       
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="camera_rgb2camera_optical" args="0 0 0 0.5, -0.4999999999999999, 0.5, 0.5000000000000001 -->
+    <!-- 						 camera_rgb_frame -->
+    <!-- 						 camera_rgb_optical_frame" -->
+    <!-- 	  /> -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="camera_depth2camera_optical" args="0 0 0 0.5, -->
+    <!-- 						   -0.4999999999999999, -->
+    <!-- 						   0.5, -->
+    <!-- 						   0.5000000000000001 -->
+    <!-- 						   camera_depth_frame -->
+    <!-- 						   camera_depth_optical_frame"/> -->
 </launch>
