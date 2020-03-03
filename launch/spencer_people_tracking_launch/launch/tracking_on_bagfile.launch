@@ -16,7 +16,7 @@
     <arg name="static_map" default="true"/>
     
     <arg name="loop" default="true"/>
-    <arg name="rate" default="0.2"/>
+    <arg name="rate" default="1.0"/>
 
     <arg name="visualization" default="true"/>
     <arg name="rviz_config_file" default="$(find spencer_people_tracking_launch)/rviz/tracking-rgbd-laser.rviz"/>

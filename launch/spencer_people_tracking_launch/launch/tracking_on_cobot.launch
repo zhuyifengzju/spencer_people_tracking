@@ -1,6 +1,23 @@
 <launch>
-    <arg name="use_upper_body_detector" default="true"/> <!-- use depth-template-based upper-body detector? -->
-    <arg name="use_pcl_detector" default="false"/> <!-- use ROI-HOG detector from PCL library? cannot be used with upper-body detector at the same time! -->
+  <!-- <remap from="/spencer/sensors/laser_front/echo0" to="/Cobot/Laser" /> -->
+
+  <!--   <remap from="/camera/depth/camera_info" -->
+  <!--   	   to="/spencer/sensors/rgbd_front_top/depth/camera_info"/> -->
+  <!--   <remap from="/camera/rgb/camera_info" -->
+  <!--   	to="/spencer/sensors/rgbd_front_top/rgb/camera_info"/> -->
+
+  <!--   <remap -->
+  <!--   	from="/camera/depth/image_rect" -->
+  <!--   	to="/spencer/sensors/rgbd_front_top/depth/image_rect" -->
+  <!--   	/> -->
+  <!--   <remap -->
+  <!--   	from="/camera/rgb/image_raw" -->
+  <!--   	to="/spencer/sensors/rgbd_front_top/rgb/image_raw"/> -->
+    <include file="$(find spencer_bagfile_tools)/launch/relay_cobot_topics.launch"> 
+    </include>
+
+  <arg name="use_upper_body_detector" default="true"/> <!-- use depth-template-based upper-body detector? -->
+  <arg name="use_pcl_detector" default="false"/> <!-- use ROI-HOG detector from PCL library? cannot be used with upper-body detector at the same time! -->
     <arg name="use_hog_detector" default="false"/> <!-- use RGB groundHOG detector? Requires cudaHOG library-->
 
     <arg name="front_laser" default="true"/>
@@ -9,9 +26,11 @@
     <arg name="rear_rgbd" default="false"/>
     <arg name="rear_laser" default="false"/>
 
+    <arg name="rviz_config_file" default="$(find spencer_people_tracking_launch)/rviz/cobot-rgbd-laser.rviz"/>
+    <arg name="rviz" default="true"/>
+    <arg name="visualization" default="true"/>
     <!-- Remap topics from cobot to spencer people tracking -->
-    <remap from="/spencer/sensors/laser_front/echo0" to="/Cobot/Laser" />
-    
+
     <!-- RGB-D detectors -->
     <include file="$(find spencer_people_tracking_launch)/launch/detectors/front_rgbd_detectors.launch" if="$(arg front_rgbd)">
         <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
@@ -19,14 +38,10 @@
         <arg name="hog" value="$(arg use_hog_detector)"/>
     </include>
 
-    <include file="$(find spencer_people_tracking_launch)/launch/detectors/rear_rgbd_detectors.launch" if="$(arg rear_rgbd)">
-        <arg name="upper_body" value="$(arg use_upper_body_detector)"/>
-        <arg name="pcl_detector" value="$(arg use_pcl_detector)"/>
-        <arg name="hog" value="$(arg use_hog_detector)"/>
-    </include>
-
     <!-- Laser detectors -->
-    <include file="$(find spencer_people_tracking_launch)/launch/detectors/laser_detectors.launch" if="$(arg front_laser)"> 
+    <include file="$(find
+		   spencer_people_tracking_launch)/launch/detectors/laser_detectors.launch"
+	     if="$(arg front_laser)">
       <!-- <arg name="rear" value="$(arg rear_laser)"/> -->
     </include>
 
@@ -39,4 +54,53 @@
     <!-- Group tracking -->
     <include file="$(find spencer_people_tracking_launch)/launch/tracking/group_tracking.launch"/> 
 
+  <!-- Create RGB and depth panoramas for visualization -->
+  <!-- <group if="$(arg visualization)" ns="/spencer/sensors"> -->
+  <!--   <node if="$(arg front_rgbd)" name="panorama_rgb_front" pkg="spencer_bagfile_tools" type="panorama_builder" args="_topics:='/spencer/sensors/rgbd_front_top/rgb /spencer/sensors/rgbd_front_bottom/rgb' _inplane_rotations:='0.0 180.0' _vertical:=true _output_topic:='/spencer/sensors/rgbd_front_panorama/rgb'"/> -->
+
+  <!--   <node if="$(arg rear_rgbd)" name="panorama_rgb_rear" pkg="spencer_bagfile_tools" type="panorama_builder" args="_topics:='/spencer/sensors/rgbd_rear_top/rgb /spencer/sensors/rgbd_rear_bottom/rgb' _inplane_rotations:='0.0 180.0' _vertical:=true _output_topic:='/spencer/sensors/rgbd_rear_panorama/rgb'"/> -->
+
+  <!--   <group if="$(arg depth)"> -->
+  <!--     <node if="$(arg front_rgbd)" name="panorama_depth_front" pkg="spencer_bagfile_tools" type="panorama_builder" args="_topics:='/spencer/sensors/rgbd_front_top/depth /spencer/sensors/rgbd_front_bottom/depth' _inplane_rotations:='0.0 180.0' _vertical:=true _output_topic:='/spencer/sensors/rgbd_front_panorama/depth'"/> -->
+
+  <!--     <node if="$(arg rear_rgbd)" name="panorama_depth_rear" pkg="spencer_bagfile_tools" type="panorama_builder" args="_topics:='/spencer/sensors/rgbd_rear_top/depth /spencer/sensors/rgbd_rear_bottom/depth' _inplane_rotations:='0.0 180.0' _vertical:=true _output_topic:='/spencer/sensors/rgbd_rear_panorama/depth'"/> -->
+  <!--   </group> -->
+  <!-- </group> -->
+    
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg
+						 rviz_config_file)"
+	required="false" if="$(arg rviz)"/> <!-- launch-prefix="xterm
+	-e gdb -ex run &#45;&#45;args" -->
+    <arg name="node_start_delay" default="1.0" />
+    <node name="listener" pkg="roscpp_tutorials" type="listener"
+    	  launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'" />
+    
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="cobot_broadcaster_odom" args="0 0 0 0 0 0 1 map odom"
+    	  />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" -->
+    <!-- 	  name="odom2base_link" args="0 0 0 0 0 0 1 odom -->
+    <!-- 				      base_footprint"/> -->
+        <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="odom2base_link" args="0 0 0 0 0 0 1 base_footprint
+    				      base_link"/>
+ 
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="cobot_broadcaster" args="0 0 0.5 0 0 0 1 base_link
+    					 laser" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="front_top_link_broadcaster" args="0 0 1.0 0 0 0 1 base_link rgbd_front_top_link" />
+    
+
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="baseline2camera_rgb" args="0 0 1.0 0 0 0 1 base_link
+					   camera_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="camera_link_rgb" args="0 0 0.0 0 0 0 1 camera_link
+					   camera_rgb_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher"
+    	  name="camera_link_depth" args="0 0 0.0 0 0 0 1 camera_link
+					   camera_depth_frame" />
+      
+    
 </launch>
